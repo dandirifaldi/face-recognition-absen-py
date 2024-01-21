@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include "head.html" %}
+</head>
+<body>
+
+{% include "navbar.html" %}
+
+<section class="py-1">
+    <div class="row mt-5">
+        <div class="col-lg-8 offset-lg-2">
+            <h3>Perkuliahan - {{y}}, {{x}}</h3>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <a href="/mahasiswa" type="button" class="btn btn-success"><b>Data Mahasiswa</b></a>
+                </div>
+                <div class="col-md-6">
+                    <a href="/mata_kuliah" type="button" class="btn btn-warning float-right"><b>Data Mata Kuliah</b></a>
+                </div>
+            </div>
+
+            <br>
+            <table class="table" style="width: 100%">
+                <thead>
+                    <tr style="text-align: center;">
+                        <!-- <th>No</th> -->
+                        <th>Mata Kuliah</th>
+                        <th>Waktu</th>
+                        <th>Ruangan</th>
+                        <th>SKS</th>
+                        <th>Dosen</th>
+                        <th>Absen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                    <tr style="text-align: center;">
+                        <!-- <td>{{i}}</td> -->
+                        <td>{{item[1]}}</td>
+                        <td>{{y}}, {{x}} {{item[9]}} WIB</td>
+                        <td>{{item[7]}}</td>
+                        <td>{{item[3]}}</td>
+                        <td>{{item[4]}}</td>
+                        <td>
+                            <a href="/absen/{{item[0]}}" type="button" class="btn btn-info">Absen</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

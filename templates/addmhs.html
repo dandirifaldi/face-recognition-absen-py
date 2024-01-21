@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include "head.html" %}
+</head>
+<body>
+
+{% include "navbar.html" %}
+
+<section class="py-1">
+    <div class="container mt-5">
+            <h3>Tambah Mahasiswa</h3>
+            <hr>
+            <form class="" method="post" action="/addmhs_submit">
+                <div class="form-group">
+                    <label for="nrp">Nomor Pokok <sup style="color: red;">*</sup></label>
+                    <input type="text" class="form-control" id="text" placeholder="Masukan NRP" name="nrp" required>
+                  </div>
+                <div class="form-group">
+                    <label for="nama_mhs" class=" col-form-label">Nama Mahasiswa <sup style="color: red;">*</sup></label>
+                    <input type="text" class="form-control" id="nama_mhs" name="nama_mhs" placeholder="Masukan Nama" required>
+                </div>
+                <div class="form-group">
+                    <label for="jk" class="col-form-label">Jenis Kelamin <sup style="color: red;">*</sup></label>
+                        <select class="form-control" name="jk" id="jk" required>
+                            <option>--Pilih Jenis Kelamin--</option>
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email <sup style="color: red;">*</sup></label>
+                    <input type="email" class="form-control" name="email" id="email" aria-describedby="emailHelp" placeholder="Masukanemail" required>
+                  </div>
+                <div class="form-group">
+                    <label for="no_telp" class=" col-form-label">No. Telp</label>
+                    <input type="text" class="form-control" id="no_telp" name="no_telp" placeholder="Masukan No. Telp">
+                </div>
+                <div class="form-group">
+                    <label for="tmpt_lahir" class=" col-form-label">Tempat Lahir <sup style="color: red;">*</sup></label>
+                        <input type="text" class="form-control" id="tmpt_lahir" name="tmpt_lahir" placeholder="Masukan Tempat Lahir" required>
+                </div>
+                <div class="form-group">
+                    <label for="tgl_lahir" class=" col-form-label">Tanggal Lahir <sup style="color: red;">*</sup></label>
+                        <input type="date" class="form-control" id="tgl_lahir" name="tgl_lahir" required>
+                </div>
+                <div class="form-group">
+                    <label for="alamat" class=" col-form-label">Alamat</label>
+                    <textarea class="form-control" name="alamat" id="alamat" cols="30" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class=" col-form-label"></label>
+                    <a href="/" type="button" class="btn btn-warning btn-lg"><b>Back</b></a>
+                    <input type="reset" class="btn btn-dark btn-lg" value="Reset">
+                    <input type="submit" class="btn btn-primary btn-lg" value="Next">
+                </div>
+            </form>
+    </div>
+</section>
+
+</body>
+</html>
