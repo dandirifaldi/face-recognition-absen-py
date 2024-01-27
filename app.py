@@ -146,25 +146,48 @@ def face_recognition(kode_mk):  # generate frame by frame from camera
                 print("row = ",row)
                 
                 mk = kode_mk
-                pnbr = row[0]
-                pnrp = row[1]
-                pname = row[2]
+                # pnbr = row[0]
+                # pnrp = row[1]
+                # pname = row[2]
                 # if int(cnt) == 30 and row is not None:
                 if int(cnt) == 30 :
-                    # pnbr = row[0]
-                    # pnrp = row[1]
-                    # pname = row[2]
-                    cnt = 0
+                    mycursor.execute("select absen_mhs,tanggal_absen, kode_mk from absensi where absen_mhs = '"+row[0]+"' and kode_mk = '"+mk+"' and tanggal_absen = '"+str(date.today())+"'")
+                    executed = mycursor.fetchone()
+                    query_yang_dijalankan1 = mycursor.statement
+                    print("Query yang dijalankan:", query_yang_dijalankan1)
+                    print("executed = ",executed)
+                    if row is not None:
+                        if executed is None:
+                            pnbr = row[0]
+                            pnrp = row[1]
+                            pname = row[2]
+                            cnt = 0
                     
 
-                    mycursor.execute("insert into absensi (tanggal_absen,kode_mk, absen_mhs) values('"+str(date.today())+"','"+ mk +"', '" + pnbr + "')")
-                    mydb.commit()
+                            mycursor.execute("insert into absensi (tanggal_absen,kode_mk, absen_mhs) values('"+str(date.today())+"','"+ mk +"', '" + pnbr + "')")
+                            mydb.commit()
  
-                    cv2.putText(img, pname + ' | ' + pnrp, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (153, 255, 255), 2, cv2.LINE_AA)
-                    time.sleep(1)
+                            cv2.putText(img, pname + ' | ' + pnrp, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (153, 255, 255), 2, cv2.LINE_AA)
+                            time.sleep(5)
  
-                    justscanned = True
-                    pause_cnt = 0
+                            justscanned = True
+                            pause_cnt = 0
+                        else:
+                            cnt=0
+                            cv2.putText(img, 'Mahasiswa Sudah Absen', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (153, 255, 255), 2,cv2.LINE_AA)
+                            time.sleep(5)
+                            justscanned = True
+                            pause_cnt = 0
+                    else:
+                        cnt=0
+                        cv2.putText(img, 'Mahasiswa Tidak Terdafar Mata Kuliah', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2,cv2.LINE_AA)
+                        time.sleep(5)
+                        justscanned = True
+                        pause_cnt = 0
+                        # if pause_cnt > 80:
+                            # justscanned = False
+ 
+
  
                 # elif(int(cnt)>30):
                 # # else:
@@ -251,7 +274,8 @@ def home():
     
             return render_template('index.html', data=data,x=x1,y=y)
     else:
-        return render_template('error.html',error = 'Unauthorized Access')
+        # return render_template('error.html',error = 'Unauthorized Access')
+        return render_template('signin.html')
 
 @app.route('/mahasiswa')
 def mahasiswa():
@@ -296,14 +320,24 @@ def addmhs_submit():
     tgl_lhr = request.form.get('tgl_lahir')
     alamat = request.form.get('alamat')
     status = "1"
- 
-    mycursor.execute("""INSERT INTO `mahasiswa` (`nrp`, `nama_mhs`, `jenis_kel`,`email`,
-      `no_telp`, `tmpt_lhr`,`tgl_lhr`,`alamat`,`status`) VALUES
+    mycursor.execute("""select nrp from mahasiswa where nrp = '{}'""".format(nrp))
+    executed = mycursor.fetchone()
+    nrp=executed[0]
+    if nrp is None:
+        mycursor.execute("""INSERT INTO `mahasiswa` (`nrp`, `nama_mhs`, `jenis_kel`,`email`,
+        `no_telp`, `tmpt_lhr`,`tgl_lhr`,`alamat`,`status`) VALUES
                     ('{}', '{}', '{}','{}', '{}', '{}','{}', '{}', '{}')""".format(nrp, nama_mhs, jk, email, no_telp, tmpt_lhr, tgl_lhr, alamat, status))
-    mydb.commit()
+        mydb.commit()
  
 
-    return redirect(url_for('vfdataset_page', nrp=nrp))
+        return redirect(url_for('vfdataset_page', nrp=nrp))
+    else:
+        print("Mahasiswa dengan NRP {} sudah terdaftar".format(nrp))
+        return render_template(
+        'addmhs.html',
+        result=nrp,
+        show_mhs_modal=True
+        )
 
 @app.route('/addmatkul_submit', methods=['POST'])
 def addmatkul_submit():
@@ -316,15 +350,26 @@ def addmatkul_submit():
     g = request.form.get('jam_akhir')
     h = request.form.get('sks')
     i = request.form.get('nama_dosen')
- 
-    mycursor.execute("""INSERT INTO `mata_kuliah` (`kode_mk`, `nama_mk`, `semester`,`sks`,`nama_dosen`) VALUES
+    
+    mycursor.execute("""select kode_mk from mata_kuliah where kode_mk = '{}'""".format(a))
+    executed = mycursor.fetchone()
+    kode_mk=executed[0]
+    if kode_mk is None:
+        mycursor.execute("""INSERT INTO `mata_kuliah` (`kode_mk`, `nama_mk`, `semester`,`sks`,`nama_dosen`) VALUES
                     ('{}', '{}', '{}','{}', '{}')""".format(a, b, c, h,i))
-    mydb.commit()
-    mycursor.execute("""INSERT INTO `jadwal` (`kode_mk`,`ruangan`,`hari`, `jam_mulai`,`jam_akhir`) VALUES
+        mydb.commit()
+        mycursor.execute("""INSERT INTO `jadwal` (`kode_mk`,`ruangan`,`hari`, `jam_mulai`,`jam_akhir`) VALUES
                     ('{}', '{}', '{}','{}', '{}')""".format(a, d, e, f, g))
-    mydb.commit()
- 
-    return redirect(url_for('dataMatkul'))
+        mydb.commit()
+    
+        return redirect(url_for('dataMatkul'))
+    else:
+        print("Mata Kuliah dengan Kode {} sudah terdaftar".format(a))
+        return render_template(
+        'addmatkul.html',
+        result=a,
+        show_matkul_modal=True
+        )
 
 @app.route('/delete_matkul/<kode_mk>', methods=['GET'])
 def deletematkul_submit(kode_mk):
@@ -614,9 +659,9 @@ def validateLogin():
         # connect to mysql 
         # con = mysql.connect()
         cursor = mydb.cursor(buffered=True)
-        mycursor.execute("select * from tbl_user where user_username = '"+_username+"'")
+        cursor.execute("select * from tbl_user where user_username = '"+_username+"'")
                     #  " and c.hari = "+ hari_absen)
-        data = mycursor.fetchall()
+        data = cursor.fetchall()
         # cursor.callproc('sp_validateLogin',(_username,))
         # data = cursor.fetchall()
         print(data)
