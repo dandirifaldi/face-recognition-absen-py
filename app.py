@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
  
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-# app.secret_key = 'why would I tell you my secret key?'
+
 app.secret_key = 'ini secret key'
  
 cnt = 0
@@ -20,7 +20,7 @@ justscanned = False
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
-    passwd="password",
+    password="",
     database="fr_absen",
     auth_plugin='mysql_native_password'
 )
@@ -34,8 +34,7 @@ def generate_dataset(nbr):
     def face_cropped(img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_classifier.detectMultiScale(gray, 1.3, 5)
-        # scaling factor=1.3
-        # Minimum neighbor = 5
+        
  
         if faces is ():
             return None
@@ -96,7 +95,7 @@ def train_classifier(nbr):
         ids.append(id)
     ids = np.array(ids)
  
-    # Train the classifier and save
+    
     clf = cv2.face.LBPHFaceRecognizer_create()
     clf.train(faces, ids)
     clf.write("classifier.xml")
@@ -105,7 +104,7 @@ def train_classifier(nbr):
  
  
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Face Recognition >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def face_recognition(kode_mk):  # generate frame by frame from camera
+def face_recognition(kode_mk):  
     def draw_boundary(img, classifier, scaleFactor, minNeighbors, color, text, clf):
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         features = classifier.detectMultiScale(gray_image, scaleFactor, minNeighbors)
@@ -151,12 +150,12 @@ def face_recognition(kode_mk):  # generate frame by frame from camera
                 # pname = row[2]
                 # if int(cnt) == 30 and row is not None:
                 if int(cnt) == 30 :
-                    mycursor.execute("select absen_mhs,tanggal_absen, kode_mk from absensi where absen_mhs = '"+row[0]+"' and kode_mk = '"+mk+"' and tanggal_absen = '"+str(date.today())+"'")
-                    executed = mycursor.fetchone()
-                    query_yang_dijalankan1 = mycursor.statement
-                    print("Query yang dijalankan:", query_yang_dijalankan1)
-                    print("executed = ",executed)
                     if row is not None:
+                        mycursor.execute("select absen_mhs,tanggal_absen, kode_mk from absensi where absen_mhs = '"+row[0]+"' and kode_mk = '"+mk+"' and tanggal_absen = '"+str(date.today())+"'")
+                        executed = mycursor.fetchone()
+                        query_yang_dijalankan1 = mycursor.statement
+                        print("Query yang dijalankan:", query_yang_dijalankan1)
+                        print("executed = ",executed)
                         if executed is None:
                             pnbr = row[0]
                             pnrp = row[1]
@@ -168,35 +167,23 @@ def face_recognition(kode_mk):  # generate frame by frame from camera
                             mydb.commit()
  
                             cv2.putText(img, pname + ' | ' + pnrp, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (153, 255, 255), 2, cv2.LINE_AA)
-                            time.sleep(5)
+                            time.sleep(1)
  
                             justscanned = True
                             pause_cnt = 0
                         else:
                             cnt=0
                             cv2.putText(img, 'Mahasiswa Sudah Absen', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (153, 255, 255), 2,cv2.LINE_AA)
-                            time.sleep(5)
+                            time.sleep(1)
                             justscanned = True
                             pause_cnt = 0
                     else:
                         cnt=0
                         cv2.putText(img, 'Mahasiswa Tidak Terdafar Mata Kuliah', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2,cv2.LINE_AA)
-                        time.sleep(5)
+                        time.sleep(1)
                         justscanned = True
                         pause_cnt = 0
-                        # if pause_cnt > 80:
-                            # justscanned = False
- 
-
- 
-                # elif(int(cnt)>30):
-                # # else:
-                #     cnt=0
-                #     cv2.putText(img,' | ', (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (153, 255, 255), 2, cv2.LINE_AA)
-                #     time.sleep(1)
-
-                #     pause_cnt = 0
-                #     justscanned=True
+                        
             else:
                 if not justscanned:
                     cv2.putText(img, 'UNKNOWN', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
@@ -253,24 +240,17 @@ def home():
             y=hari[x.strftime("%w")]
             z=x.strftime("%H:%M:%S")
             mycursor.execute("""select jam_mulai from jadwal ORDER BY jam_mulai DESC LIMIT 1 """)
-            # mycursor.execute("""select jam_mulai from jadwal where jadwal.hari = '{}'""".format(y))
+            
             result = mycursor.fetchone()
             waktu_awal=result[0] if result else datetime.now()
             waktu_akhir = waktu_awal + timedelta(minutes=15)
             waktu_awal -= timedelta(minutes=10)
             print("waktu awal : ",waktu_awal)
             print("waktu akhir : ",waktu_akhir)
-            # Format datetime menjadi string yang sesuai untuk query MySQL
-            # format_waktu = "%H:%M:%S"
-            # waktu_awal_str = waktu_awal.strftime(format_waktu)
-            # waktu_akhir_str = waktu_akhir.strftime(format_waktu)
-            # if z>=jam_mulai:
-
-            # mycursor.execute("""select * from mata_kuliah join jadwal on jadwal.kode_mk = mata_kuliah.kode_mk where jadwal.hari = '{}' and jadwal.jam_mulai >=  '{}' and jadwal.jam_mulai <= '{}'""".format(y,waktu_awal,waktu_akhir))
+            
             mycursor.execute("""select * from mata_kuliah join jadwal on jadwal.kode_mk = mata_kuliah.kode_mk where jadwal.hari = '{}' and jadwal.jam_akhir >= NOW() """.format(y,waktu_awal,waktu_akhir))
             data = mycursor.fetchall()
-            # query_yang_dijalankan = mycursor.statement
-            # print("Query yang dijalankan:", query_yang_dijalankan)
+            
     
             return render_template('index.html', data=data,x=x1,y=y)
     else:
@@ -300,6 +280,15 @@ def addmhs():
  
     return render_template('addmhs.html')
 
+@app.route('/edit_mhs/<nrp>', methods=['GET'])
+def editmhs(nrp):
+    mycursor.execute("""SELECT * FROM `mahasiswa` WHERE `nrp` = '{}';""".format(nrp))
+    data = mycursor.fetchone()
+    # print(int(nbr))
+ 
+    return render_template('editMhs.html', data=data)
+
+
 @app.route('/addmatkul')
 def addmatkul():
     mycursor.execute("select ifnull(max(nrp) + 1, 0) from mahasiswa")
@@ -322,8 +311,8 @@ def addmhs_submit():
     status = "1"
     mycursor.execute("""select nrp from mahasiswa where nrp = '{}'""".format(nrp))
     executed = mycursor.fetchone()
-    nrp=executed[0]
-    if nrp is None:
+    #nrp=executed[0]
+    if executed is None:
         mycursor.execute("""INSERT INTO `mahasiswa` (`nrp`, `nama_mhs`, `jenis_kel`,`email`,
         `no_telp`, `tmpt_lhr`,`tgl_lhr`,`alamat`,`status`) VALUES
                     ('{}', '{}', '{}','{}', '{}', '{}','{}', '{}', '{}')""".format(nrp, nama_mhs, jk, email, no_telp, tmpt_lhr, tgl_lhr, alamat, status))
@@ -338,6 +327,26 @@ def addmhs_submit():
         result=nrp,
         show_mhs_modal=True
         )
+    
+@app.route('/editmhs_submit', methods=['POST'])
+def editmhs_submit():
+    nrp = request.form.get('nrp')
+    nama_mhs = request.form.get('nama_mhs')
+    jk = request.form.get('jk')
+    email = request.form.get('email')
+    no_telp = request.form.get('no_telp')
+    tmpt_lhr = request.form.get('tmpt_lahir')
+    tgl_lhr = request.form.get('tgl_lahir')
+    print(tgl_lhr)
+    alamat = request.form.get('alamat')
+    status = request.form.get('status')
+    mycursor.execute("""UPDATE mahasiswa SET nama_mhs='{}', jenis_kel='{}',`email`='{}',
+        no_telp='{}', tmpt_lhr='{}',tgl_lhr='{}',alamat='{}',status='{}' WHERE nrp='{}'""".format(nama_mhs, jk, email, no_telp, tmpt_lhr, tgl_lhr, alamat, status,nrp))
+    mydb.commit()
+    mycursor.execute("select nrp, nama_mhs, jenis_kel, email, status, date_added from mahasiswa")
+    data = mycursor.fetchall()
+    data_count = len(data)
+    return render_template('mahasiswa.html', data=data,data_count=data_count)
 
 @app.route('/addmatkul_submit', methods=['POST'])
 def addmatkul_submit():
@@ -353,8 +362,8 @@ def addmatkul_submit():
     
     mycursor.execute("""select kode_mk from mata_kuliah where kode_mk = '{}'""".format(a))
     executed = mycursor.fetchone()
-    kode_mk=executed[0]
-    if kode_mk is None:
+    #kode_mk=executed[0]
+    if executed is None:
         mycursor.execute("""INSERT INTO `mata_kuliah` (`kode_mk`, `nama_mk`, `semester`,`sks`,`nama_dosen`) VALUES
                     ('{}', '{}', '{}','{}', '{}')""".format(a, b, c, h,i))
         mydb.commit()
@@ -448,9 +457,7 @@ def absensi_matkul(id):
                      " where a.tanggal_absen = curdate() and a.kode_mk = "+ id +
                      " order by 1 desc")
     data = mycursor.fetchall()
-    # print(data)
-    # query_yang_dijalankan = mycursor.statement
-    # print("Query yang dijalankan:", query_yang_dijalankan)
+    
     mycursor.execute("""select nama_mk from mata_kuliah where kode_mk = '{}'""".format(id))
     nama_mk = mycursor.fetchone()
     nama_mk=nama_mk[0]
@@ -474,7 +481,7 @@ def countTodayScan():
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="password",
+        password="",
         database="fr_absen",
         auth_plugin='mysql_native_password'
     )
@@ -494,7 +501,7 @@ def loadData(id):
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="password",
+        password="",
         database="fr_absen",
         auth_plugin='mysql_native_password'
     )
@@ -564,9 +571,9 @@ def detal_mk(kode_mk):
     hari_absen= data_matkul_jadwal[8]
     mycursor.execute("select b.nrp, b.nama_mhs, count(a.tanggal_absen) from absensi a "
                      "join mahasiswa b on b.nrp=a.absen_mhs "
-                    #  "join jadwal c on c.kode_mk=b.kode_mk "
+                    
                      "where a.kode_mk = "+ kode_mk + " group by b.nrp")
-                    #  " and c.hari = "+ hari_absen)
+                    
     data_all = mycursor.fetchall()
     print(data_all)
     query_yang_dijalankan = mycursor.statement
@@ -589,9 +596,7 @@ def signUp():
         # validate the received values
         if _name and _email and _password:
             
-            # All Good, let's call MySQL
             
-            # conn = mysql.connect()
             cursor = mydb.cursor(buffered=True)
             _hashed_password = generate_password_hash(_password)
             cursor.callproc('sp_createUser',(_name,_email,_hashed_password))
@@ -627,24 +632,17 @@ def showSignin():
         y=hari[x.strftime("%w")]
         z=x.strftime("%H:%M:%S")
         mycursor.execute("""select jam_mulai from jadwal ORDER BY jam_mulai DESC LIMIT 1 """)
-        # mycursor.execute("""select jam_mulai from jadwal where jadwal.hari = '{}'""".format(y))
+        
         result = mycursor.fetchone()
         waktu_awal=result[0] if result else datetime.now()
         waktu_akhir = waktu_awal + timedelta(minutes=15)
         waktu_awal -= timedelta(minutes=10)
         print("waktu awal : ",waktu_awal)
         print("waktu akhir : ",waktu_akhir)
-        # Format datetime menjadi string yang sesuai untuk query M          ySQL
-        # format_waktu = "%H:%M:%S"
-        # waktu_awal_str = waktu_awal.strftime(format_waktu)
-        # waktu_akhir_str = waktu_akhir.strftime(format_waktu)
-        # if z>=jam_mulai:
-
-        # mycursor.execute("""select * from mata_kuliah join jadwal on jadwal.kode_mk = mata_kuliah.kode_mk where jadwal.hari = '{}' and jadwal.jam_mulai >=  '{}' and jadwal.jam_mulai <= '{}'""".format(y,waktu_awal,waktu_akhir))
+        
         mycursor.execute("""select * from mata_kuliah join jadwal on jadwal.kode_mk = mata_kuliah.kode_mk where jadwal.hari = '{}' and jadwal.jam_akhir >= NOW() """.format(y,waktu_awal,waktu_akhir))
         data = mycursor.fetchall()
-        # query_yang_dijalankan = mycursor.statement
-        # print("Query yang dijalankan:", query_yang_dijalankan)
+        
     
         return render_template('index.html', data=data,x=x1,y=y)
     else:
