@@ -7,6 +7,8 @@ import os
 import time
 from datetime import date, datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+import io
+import xlwt
  
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -683,5 +685,49 @@ def logout():
     session.pop('user',None)
     return redirect('/showSignin')
     
+@app.route('/download/report/absen/<kode_mk>')
+def download_report(kode_mk):
+	cursor = None
+	try:
+		cursor = mydb.cursor(buffered=True)
+		
+		cursor.execute("SELECT emp_id, emp_first_name, emp_last_name, emp_designation FROM employee")
+		result = cursor.fetchall()
+		
+		#output in bytes
+		output = io.BytesIO()
+		#create WorkBook object
+		workbook = xlwt.Workbook()
+		#add a sheet
+		sh = workbook.add_sheet('Absensi '+kode_mk)
+		
+		#add headers
+		sh.write_merge(0, 0, 0, 14,'Absensi')
+		sh.write(2, 0, 'Mata Kuliah')
+		sh.write(2, 1, kode_mk)
+		sh.write_merge(3, 0, 4, 0, 'No.')
+		sh.write_merge(3, 1, 4, 1, 'NRP')
+		sh.write_merge(3, 2, 4, 2, 'Nama Mahasiswa')
+		sh.write_merge(3, 3, 3, 14, 'Tanggal')
+		
+		idx = 5
+		no = 1
+		for row in result:
+			sh.write(idx, 0, no)
+			sh.write(idx, 1, row['nrp'])
+			sh.write(idx, 2, row['nama_mhs'])
+			sh.write(idx, 3, row['waktu_absensi'])
+			idx += 1
+			no += 1
+		
+		workbook.save(output)
+		output.seek(0)
+		
+		return Response(output, mimetype="application/ms-excel", headers={"Content-Disposition":"attachment;filename=absensi_"+kode_mk+".xls"})
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=5000, debug=True)
