@@ -22,7 +22,7 @@ justscanned = False
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="",
+    password="password",
     database="fr_absen",
     auth_plugin='mysql_native_password'
 )
@@ -483,7 +483,7 @@ def countTodayScan():
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="",
+        password="password",
         database="fr_absen",
         auth_plugin='mysql_native_password'
     )
@@ -503,7 +503,7 @@ def loadData(id):
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="",
+        password="password",
         database="fr_absen",
         auth_plugin='mysql_native_password'
     )
@@ -573,7 +573,6 @@ def detal_mk(kode_mk):
     hari_absen= data_matkul_jadwal[8]
     mycursor.execute("select b.nrp, b.nama_mhs, count(a.tanggal_absen) from absensi a "
                      "join mahasiswa b on b.nrp=a.absen_mhs "
-                    
                      "where a.kode_mk = "+ kode_mk + " group by b.nrp")
                     
     data_all = mycursor.fetchall()
@@ -687,47 +686,78 @@ def logout():
     
 @app.route('/download/report/absen/<kode_mk>')
 def download_report(kode_mk):
-	cursor = None
-	try:
-		cursor = mydb.cursor(buffered=True)
-		
-		cursor.execute("SELECT emp_id, emp_first_name, emp_last_name, emp_designation FROM employee")
-		result = cursor.fetchall()
-		
-		#output in bytes
-		output = io.BytesIO()
-		#create WorkBook object
-		workbook = xlwt.Workbook()
-		#add a sheet
-		sh = workbook.add_sheet('Absensi '+kode_mk)
-		
-		#add headers
-		sh.write_merge(0, 0, 0, 14,'Absensi')
-		sh.write(2, 0, 'Mata Kuliah')
-		sh.write(2, 1, kode_mk)
-		sh.write_merge(3, 0, 4, 0, 'No.')
-		sh.write_merge(3, 1, 4, 1, 'NRP')
-		sh.write_merge(3, 2, 4, 2, 'Nama Mahasiswa')
-		sh.write_merge(3, 3, 3, 14, 'Tanggal')
-		
-		idx = 5
-		no = 1
-		for row in result:
-			sh.write(idx, 0, no)
-			sh.write(idx, 1, row['nrp'])
-			sh.write(idx, 2, row['nama_mhs'])
-			sh.write(idx, 3, row['waktu_absensi'])
-			idx += 1
-			no += 1
-		
-		workbook.save(output)
-		output.seek(0)
-		
-		return Response(output, mimetype="application/ms-excel", headers={"Content-Disposition":"attachment;filename=absensi_"+kode_mk+".xls"})
-	except Exception as e:
-		print(e)
-	finally:
-		cursor.close()
+    cursor = None
+    cursor = mydb.cursor(buffered=True)
+        
+    cursor.execute("""SELECT 
+                        a.id_absen,
+                        mk.kode_mk,
+                        mk.nama_mk,
+                        mk.nama_dosen,
+                        m.nrp,
+                        m.nama_mhs,
+                        m.jenis_kel,
+                        substring(a.waktu_absen,12) as waktu_absen,
+                        DATE_FORMAT(a.tanggal_absen, '%d-%m-%Y') AS tanggal_absen,
+                        a.absen_mhs
+                    FROM
+                        absensi a
+                            JOIN
+                        mahasiswa m ON a.absen_mhs = m.nrp
+                            JOIN
+                        mata_kuliah mk ON a.kode_mk = mk.kode_mk
+                    WHERE
+                        a.kode_mk='{}'
+                   ORDER BY a.absen_mhs""".format(kode_mk))
+    result = cursor.fetchall()
+    # cursor.execute("""select a.absen_mhs,
+    #                     substring(a.waktu_absen,12) as waktu_absen 
+    #                from absensi a 
+    #                where 
+    #                     a.kode_mk='{}' and a.absen_mhs='{}'""".format(kode_mk,))
+    # jam_query = cursor.fetchall()
+    #output in bytes
+    output = io.BytesIO()
+    #create WorkBook object
+    workbook = xlwt.Workbook()
+    #add a sheet
+    if result is not None:
+        sh = workbook.add_sheet('Absensi '+kode_mk +" - "+result[0][2],cell_overwrite_ok=True)
+        sh.write(2, 1, kode_mk +" - "+result[0][2])
+        sh.write(2, 4, result[0][3])
+    else:
+        sh = workbook.add_sheet('Absensi '+kode_mk,cell_overwrite_ok=True)
+        sh.write(2, 1, kode_mk)
+        sh.write(2, 4, "-")
+        #add headers
+    sh.write_merge(0, 0, 0, 14,'Absensi')
+    sh.write(2, 0, 'Mata Kuliah :')
+    sh.write(2, 3, 'Dosen :')
+    sh.write_merge(3, 4, 0, 0, 'No.')
+    sh.write_merge(3, 4, 1, 1, 'NRP')
+    sh.write_merge(3, 4, 2, 2, 'Nama Mahasiswa')
+    # sh.write_merge(3, 3, 3, 22, 'Tanggal')
+    sh.write_merge(3, 4, 3, 3, 'Tanggal')
+    sh.write_merge(3, 4, 4, 4, 'Waktu Absen')
+        
+    idx = 5
+    no = 1
+    # for tgl in result:
+        # sh.write(4,3, tgl[0])
+    for row in result:
+        sh.write(idx, 0, no)
+        sh.write(idx, 1, row[4]) 
+        sh.write(idx, 2, row[5]) 
+        sh.write(idx, 3, row[8]) 
+        # for jam in jam_query:
+        sh.write(idx, 4, row[7]) 
+        idx += 1
+        no += 1
+        
+    workbook.save(output)
+    output.seek(0)
+        
+    return Response(output.getvalue(), mimetype="application/ms-excel", headers={"Content-Disposition":"attachment;filename=absensi_"+kode_mk+".xls"})
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=5000, debug=True)
